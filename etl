@@ -8,7 +8,7 @@ Basado en el manual para limpiar el archivo ventas_tienda.csv.
 import pandas as pd
 import numpy as np
 
-print("--- INICIANDO PROCESO ETL ---")
+print("--- INICIANDO PROCESO ETL ---") #hola maestra 
 
 # =============================================================================
 # FASE 1: EXTRACCIÓN (EXTRACT) 📥
