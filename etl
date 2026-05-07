@@ -7,7 +7,7 @@ Basado en el manual para limpiar el archivo ventas_tienda.csv.
 # Importamos la librería pandas, nuestra principal herramienta para este proceso.
 import pandas as pd
 import numpy as np
-
+Hola Maestra 
 print("--- INICIANDO PROCESO ETL ---")
 
 # =============================================================================
