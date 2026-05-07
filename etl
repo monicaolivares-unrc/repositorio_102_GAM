@@ -1,0 +1,134 @@
+# -*- coding: utf-8 -*-
+"""
+Script completo para el Proceso ETL (Extracción, Transformación y Carga)
+Basado en el manual para limpiar el archivo ventas_tienda.csv.
+"""
+
+# Importamos la librería pandas, nuestra principal herramienta para este proceso.
+import pandas as pd
+import numpy as np
+
+print("--- INICIANDO PROCESO ETL ---")
+
+# =============================================================================
+# FASE 1: EXTRACCIÓN (EXTRACT) 📥
+# =============================================================================
+# En esta fase, leemos los datos desde la fuente original (nuestro archivo CSV)
+# y los cargamos en un DataFrame de pandas para poder manipularlos.
+
+print("\n--- FASE 1: EXTRACCIÓN ---")
+nombre_archivo = 'ventas_tienda.csv'
+
+try:
+    # Intentamos cargar el archivo CSV en un DataFrame.
+    df = pd.read_csv(nombre_archivo)
+    print(f"✅ Archivo '{nombre_archivo}' cargado exitosamente.")
+    print(f"El dataset original tiene {df.shape[0]} filas y {df.shape[1]} columnas.")
+    
+    print("\nMostrando las primeras 5 filas de los datos crudos:")
+    print(df.head())
+
+except FileNotFoundError:
+    print(f"❌ ERROR: No se encontró el archivo '{nombre_archivo}'.")
+    print("Asegúrate de haberlo subido a tu entorno de Google Colab antes de ejecutar.")
+    # Salimos del script si no se encuentra el archivo.
+    exit()
+
+# =============================================================================
+# FASE 2: TRANSFORMACIÓN (TRANSFORM) ✨
+# =============================================================================
+# Esta es la fase central donde realizamos toda la limpieza y estandarización
+# de los datos para asegurar su calidad y consistencia.
+
+print("\n--- FASE 2: TRANSFORMACIÓN ---")
+
+# --- 2.1 Exploración Inicial ---
+print("\nRealizando una exploración inicial de los datos...")
+print("Información general y tipos de datos (antes de la limpieza):")
+df.info()
+
+# --- 2.2 Manejo de Duplicados ---
+print("\nBuscando y eliminando registros duplicados...")
+num_duplicados_antes = df.duplicated().sum()
+if num_duplicados_antes > 0:
+    df.drop_duplicates(inplace=True)
+    print(f"✅ Se eliminaron {num_duplicados_antes} filas duplicadas.")
+    print(f"Número de filas actual: {len(df)}")
+else:
+    print("ℹ️ No se encontraron filas duplicadas.")
+
+# --- 2.3 Corrección de Tipos de Datos y Formatos ---
+print("\nEstandarizando formatos...")
+
+# a) Fechas: Unificar formatos en la columna 'Fecha'
+print("Convirtiendo la columna 'Fecha' a un formato de fecha estándar (datetime)...")
+df['Fecha'] = pd.to_datetime(df['Fecha'], errors='coerce', dayfirst=False)
+# 'errors=coerce' convertirá cualquier fecha que no pueda interpretar en 'NaT' (Not a Time), un valor nulo para fechas.
+
+# b) Texto: Estandarizar la columna 'Categoria' a minúsculas
+print("Convirtiendo el texto de la columna 'Categoria' a minúsculas...")
+df['Categoria'] = df['Categoria'].str.lower()
+print("✅ Formatos de fecha y texto estandarizados.")
+
+# --- 2.4 Manejo de Valores Faltantes (Nulos) ---
+print("\nGestionando valores faltantes...")
+
+# a) Producto: Eliminar filas donde el producto es nulo.
+filas_antes = len(df)
+df.dropna(subset=['Producto'], inplace=True)
+filas_despues = len(df)
+if filas_antes > filas_despues:
+    print(f"✅ Se eliminaron {filas_antes - filas_despues} filas con 'Producto' faltante.")
+
+# b) Region: Rellenar valores nulos con 'desconocida'.
+df['Region'].fillna('desconocida', inplace=True)
+print("✅ Valores nulos en 'Region' se rellenaron con 'desconocida'.")
+
+# c) Cantidad: Limpiar, convertir y rellenar.
+# Primero, convertir a numérico. Los valores no numéricos como 'N/A' se volverán NaN.
+df['Cantidad'] = pd.to_numeric(df['Cantidad'], errors='coerce')
+# Segundo, calcular la mediana ANTES de rellenar los nulos.
+mediana_cantidad = df['Cantidad'].median()
+# Tercero, rellenar los NaN con la mediana.
+df['Cantidad'].fillna(mediana_cantidad, inplace=True)
+# Finalmente, convertir la columna a tipo entero.
+df['Cantidad'] = df['Cantidad'].astype(int)
+print("✅ La columna 'Cantidad' ha sido limpiada, convertida a numérica y los nulos se rellenaron con la mediana.")
+
+# --- 2.5 Manejo de Valores Inconsistentes o Atípicos ---
+print("\nCorrigiendo valores atípicos...")
+# a) Precio: Convertir precios negativos a positivos usando el valor absoluto.
+num_precios_negativos = (df['Precio'] < 0).sum()
+if num_precios_negativos > 0:
+    df['Precio'] = df['Precio'].abs()
+    print(f"✅ Se corrigieron {num_precios_negativos} registros con precios negativos.")
+else:
+    print("ℹ️ No se encontraron precios negativos.")
+
+print("\n📊 Verificación final de los datos transformados:")
+df.info()
+print("\nPrimeras 5 filas del DataFrame limpio:")
+print(df.head())
+
+
+# =============================================================================
+# FASE 3: CARGA (LOAD) 📤
+# =============================================================================
+# Una vez que los datos están limpios, los guardamos en un nuevo destino.
+# En este caso, será un nuevo archivo CSV.
+
+print("\n--- FASE 3: CARGA ---")
+
+archivo_salida = 'ventas_tienda_limpio.csv'
+
+try:
+    # Guardamos el DataFrame limpio en un nuevo archivo CSV.
+    # index=False evita que se guarde el índice del DataFrame como una columna.
+    df.to_csv(archivo_salida, index=False, encoding='utf-8')
+    print(f"✅ ¡Proceso completado! Los datos limpios se han guardado en '{archivo_salida}'.")
+    print(f"El dataset final tiene {df.shape[0]} filas y {df.shape[1]} columnas.")
+
+except Exception as e:
+    print(f"❌ Ocurrió un error al guardar el archivo: {e}")
+
+print("\n--- PROCESO ETL FINALIZADO ---")
