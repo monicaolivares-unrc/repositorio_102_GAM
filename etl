@@ -33,7 +33,7 @@ except FileNotFoundError:
     print("Asegúrate de haberlo subido a tu entorno de Google Colab antes de ejecutar.")
     # Salimos del script si no se encuentra el archivo.
     exit()
-
+#Hola maestra
 # =============================================================================
 # FASE 2: TRANSFORMACIÓN (TRANSFORM) ✨
 # =============================================================================
